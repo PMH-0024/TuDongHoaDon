@@ -12,8 +12,13 @@ import smtplib
  # Mã hóa kết nối Gmail
 import ssl        
 from email.message import EmailMessage 
+MA_TRA_CUU_LIST = [
+    # "PZH_FWQ4BN3",
+    "B1HEIRR8N0WP",
+    # "VBHKSL682918"
+]
 # Thông tin cấu hình
-MA_TRA_CUU = "B1HEIRR8N0WP"               
+# MA_TRA_CUU = "B1HEIRR8N0WP"               
 EMAIL_NHAN = "hp859869@gmail.com"     
 EMAIL_GUI = "hp859869@gmail.com"        
 MAT_KHAU_UNG_DUNG = "wvqo nsxe oels rqmz" 
@@ -38,18 +43,25 @@ def tra_cuu_va_tai_hoa_don(ma_tra_cuu):
     try:
         # Đợi đến khi ô nhập mã xuất hiện
         WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "input[placeholder='Nhập mã tra cứu']"))
+            EC.presence_of_element_located((By.NAME, "txtCode"))
         )
         # Nhập mã tra cứu và search
-        input_box = driver.find_element(By.CSS_SELECTOR, "input[placeholder='Nhập mã tra cứu']")
+        input_box = driver.find_element(By.NAME, "txtCode")
         input_box.send_keys(ma_tra_cuu)
-        input_box.send_keys(Keys.ENTER)
+        input_box.clear  # Nhấn Enter để tìm kiếm
+        # input_box.send_keys(Keys.ENTER)
         print("Đang tra cứu mã:", ma_tra_cuu)
+        search_button = WebDriverWait(driver, 5).until(
+            EC.element_to_be_clickable((By.ID, "btnSearchInvoice"))
+        )
+        search_button.click()
+        print("✅ Đã nhấn nút 'Tra cứu'")
+        print("Đã nhấn nút tìm kiếm")
         # Đợi nút "Tải hóa đơn" hiện ra và nhấn vào
         download_button = WebDriverWait(driver, 15).until(
             EC.element_to_be_clickable((By.XPATH, "//span[contains(text(),'Tải hóa đơn')]"))
         )
-        time.sleep(1)  # Chờ thêm 1 giây rồi nhấn nút tải
+        time.sleep(10)  # Chờ thêm 1 giây rồi nhấn nút tải
         download_button.click()
         print("Đã nhấn nút tải hóa đơn")
     except Exception as e:
@@ -97,13 +109,12 @@ def gui_file_ve_gmail(file_path, email_gui, mat_khau_app, email_nhan):
         print(f"Đã gửi file '{file_name}' về Gmail:", email_nhan)
 if __name__ == "__main__":
     print("Bắt đầu tra cứu và gửi hóa đơn...")
-    # Bước 1: Tải hóa đơn
-    tra_cuu_va_tai_hoa_don(MA_TRA_CUU)
-    # Bước 2: Tìm file vừa tải về
-    file_moi = tim_file_moi_nhat(FOLDER_DOWNLOAD)
-    # Bước 3: Gửi file nếu có
-    if file_moi:
-        print("✅ File đã tải:", file_moi)
-        gui_file_ve_gmail(file_moi, EMAIL_GUI, MAT_KHAU_UNG_DUNG, EMAIL_NHAN)
-    else:
-        print("Không tìm thấy file nào để gửi.")
+    for ma in MA_TRA_CUU_LIST:
+        tra_cuu_va_tai_hoa_don(ma)
+        file_moi = tim_file_moi_nhat(FOLDER_DOWNLOAD)
+        if file_moi:
+            print("✅ File đã tải:", file_moi)
+            gui_file_ve_gmail(file_moi, EMAIL_GUI, MAT_KHAU_UNG_DUNG, EMAIL_NHAN)
+        else:
+            print("⚠️ Không tìm thấy file nào để gửi.")
+        print("--------------------------------------------------")
